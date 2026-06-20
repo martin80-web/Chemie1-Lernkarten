@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chemie · Lernkarten B IV</title>
+<style>
+  :root{
+    --ink:#0f141b;            /* page background */
+    --ink-2:#161d27;          /* raised chrome */
+    --line:#26303d;           /* hairlines on dark */
+    --paper:#f7f4ec;          /* card surface */
+    --paper-edge:#e9e3d4;     /* card inner edge */
+    --text:#1a1e26;           /* text on paper */
+    --muted:#6b7382;          /* muted on dark */
+    --muted-paper:#7c7565;    /* muted on paper */
+    --ember:#ea7a3c;          /* interactive accent */
+    --ember-soft:#3a2a20;
+    --ok:#4FA85A;             /* gewusst */
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,system-ui,sans-serif;
+    --r:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--sans);
+    color:#e8eaee;
+    background:
+      linear-gradient(180deg,#0c1118,#0f141b 40%,#10161e);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* faint engineering grid */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(120,140,170,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(120,140,170,.045) 1px,transparent 1px);
+    background-size:26px 26px;
+    -webkit-mask-image:radial-gradient(ellipse 120% 80% at 50% 22%,#000 35%,transparent 92%);
+            mask-image:radial-gradient(ellipse 120% 80% at 50% 22%,#000 35%,transparent 92%);
+  }
+  .wrap{
+    position:relative;z-index:1;
+    max-width:680px;margin:0 auto;
+    padding:max(20px,env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom));
+    min-height:100%;
+    display:flex;flex-direction:column;gap:16px;
+  }
+
+  /* ---- header ---- */
+  header{display:flex;flex-direction:column;gap:4px}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--ember);display:flex;align-items:center;gap:9px;
+  }
+  .eyebrow::before{content:"";width:18px;height:1px;background:var(--ember);display:inline-block}
+  h1{margin:0;font-size:26px;font-weight:760;letter-spacing:-.02em;line-height:1.05}
+  .sub{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+  /* ---- filter chips ---- */
+  .chips{
+    display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:0 -18px;
+    padding-left:18px;padding-right:18px;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto;cursor:pointer;border:1px solid var(--line);background:var(--ink-2);
+    color:#cfd4dc;border-radius:999px;padding:7px 13px;font-size:13px;line-height:1;
+    display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-family:var(--sans);
+    transition:border-color .15s,background .15s,color .15s,transform .05s;
+  }
+  .chip:active{transform:scale(.97)}
+  .chip .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .chip .n{font-family:var(--mono);font-size:11px;opacity:.65}
+  .chip[aria-pressed="true"]{font-weight:650;border-color:transparent}
+  .chip[aria-pressed="true"] .n{opacity:.8}
+  .chip[aria-pressed="true"] .dot{display:none}
+
+  /* ---- progress ---- */
+  .meter{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .bar{flex:1;height:6px;border-radius:99px;background:#1c242f;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ember),#f3a567);transition:width .35s ease}
+  .meter .known{color:var(--ok)}
+
+  /* ---- card ---- */
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;perspective:1600px;min-height:330px}
+  .card{
+    position:relative;width:100%;max-width:560px;min-height:300px;
+    transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.7,.2,1);
+    cursor:pointer;
+  }
+  .card.flipped{transform:rotateY(180deg)}
+  .face{
+    position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;
+    background:linear-gradient(180deg,var(--paper),var(--paper-edge));
+    border-radius:var(--r);color:var(--text);
+    padding:30px 26px 26px;display:flex;flex-direction:column;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 18px 40px -18px rgba(0,0,0,.65),0 2px 10px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .face.back{transform:rotateY(180deg)}
+  /* register tab */
+  .tab{
+    position:absolute;top:-1px;left:24px;height:7px;width:84px;border-radius:0 0 6px 6px;
+  }
+  /* colored left spine */
+  .spine{position:absolute;left:0;top:0;bottom:0;width:6px}
+  .face::after{ /* subtle ruled baseline like a notecard */
+    content:"";position:absolute;left:26px;right:26px;bottom:64px;height:1px;
+    background:repeating-linear-gradient(90deg,rgba(0,0,0,.06) 0 6px,transparent 6px 12px);
+  }
+  .label{
+    font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;
+  }
+  .label .topic{color:var(--muted-paper);max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .label .kind{font-weight:700}
+  .front .label .kind{color:#9a7b3e}
+  .back  .label .kind{color:var(--ok)}
+  .qa{
+    flex:1;display:flex;align-items:center;
+    font-size:clamp(19px,5.2vw,25px);line-height:1.38;font-weight:560;letter-spacing:-.005em;
+    padding-bottom:48px;
+  }
+  .back .qa{font-weight:600}
+  .hint{
+    position:absolute;left:26px;right:26px;bottom:22px;
+    font-family:var(--mono);font-size:11px;color:var(--muted-paper);
+    display:flex;align-items:center;gap:7px;
+  }
+  .hint svg{width:14px;height:14px;opacity:.75}
+  .idx{font-family:var(--mono);font-size:11px;color:var(--muted-paper);margin-left:auto}
+
+  /* ---- controls ---- */
+  .controls{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;gap:10px}
+  button{font-family:var(--sans);cursor:pointer;border:none;border-radius:13px;font-size:15px}
+  button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+  .nav{
+    flex:1;background:var(--ink-2);color:#dfe3ea;border:1px solid var(--line);
+    padding:13px 10px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:border-color .15s,background .15s,transform .05s;
+  }
+  .nav:hover{border-color:#3a4658}
+  .nav:active{transform:translateY(1px)}
+  .nav:disabled{opacity:.4;cursor:not-allowed}
+  .flip{
+    flex:1.4;background:var(--ember);color:#1a120b;font-weight:760;padding:13px;
+    box-shadow:0 8px 20px -10px rgba(234,122,60,.8);transition:filter .15s,transform .05s;
+  }
+  .flip:hover{filter:brightness(1.05)}
+  .flip:active{transform:translateY(1px)}
+  .mark{
+    flex:1;padding:12px;font-weight:650;border:1px solid var(--line);background:var(--ink-2);
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .mark svg{width:17px;height:17px}
+  .mark.again{color:#f0b48a}
+  .mark.again:hover{border-color:var(--ember);background:var(--ember-soft)}
+  .mark.know{color:var(--ok)}
+  .mark.know:hover{border-color:var(--ok);background:#16241a}
+
+  /* toolbar: shuffle / only-new / reset */
+  .tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .toggle{
+    background:var(--ink-2);border:1px solid var(--line);color:#c3c9d3;border-radius:999px;
+    padding:8px 13px;font-size:13px;display:inline-flex;align-items:center;gap:8px;transition:.15s;
+  }
+  .toggle[aria-pressed="true"]{color:#1a120b;background:var(--ember);border-color:transparent;font-weight:650}
+  .toggle svg{width:15px;height:15px}
+  .spacer{flex:1}
+  .reset{background:none;border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:8px 13px;font-size:13px;transition:.15s}
+  .reset:hover{color:#cdd2da;border-color:#3a4658}
+
+  /* empty / done state */
+  .empty{
+    width:100%;max-width:560px;min-height:300px;border-radius:var(--r);
+    border:1px dashed var(--line);background:rgba(255,255,255,.015);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    text-align:center;padding:28px;
+  }
+  .empty .big{font-size:40px}
+  .empty h2{margin:0;font-size:19px;font-weight:680}
+  .empty p{margin:0;color:var(--muted);font-size:14px;max-width:34ch;line-height:1.5}
+  .empty button{background:var(--ember);color:#1a120b;font-weight:700;padding:11px 20px;border-radius:12px}
+
+  .foot{font-family:var(--mono);font-size:11px;color:#4d5663;text-align:center;line-height:1.7}
+  .kbd{border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:#9aa2af;background:#141b24}
+
+  @media (max-width:420px){
+    .label .topic{max-width:58%}
+    .row .nav span.t{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .card{transition:none}
+    .bar>i{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Chemie · Brandbekämpfung B IV</div>
+    <h1>Lernkarten</h1>
+    <div class="sub" id="sub">– Karten</div>
+  </header>
+
+  <nav class="chips" id="chips" aria-label="Thema wählen"></nav>
+
+  <div class="meter">
+    <span id="pos">0 / 0</span>
+    <div class="bar"><i id="barfill"></i></div>
+    <span class="known" id="known">✓ 0</span>
+  </div>
+
+  <main class="stage" id="stage"></main>
+
+  <div class="controls" id="controls">
+    <div class="row">
+      <button class="nav" id="prev" aria-label="Vorherige Karte">‹ <span class="t">Zurück</span></button>
+      <button class="flip" id="flip">Umdrehen</button>
+      <button class="nav" id="next" aria-label="Nächste Karte"><span class="t">Weiter</span> ›</button>
+    </div>
+    <div class="row">
+      <button class="mark again" id="again" title="Taste N">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        Nochmal
+      </button>
+      <button class="mark know" id="know" title="Taste J">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Gewusst
+      </button>
+    </div>
+    <div class="tools">
+      <button class="toggle" id="shuffle" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg>
+        Mischen
+      </button>
+      <button class="toggle" id="onlynew" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M11 18h2"/></svg>
+        Nur offene
+      </button>
+      <span class="spacer"></span>
+      <button class="reset" id="reset">Zurücksetzen</button>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>window.DATA = {"cards": [{"id": 0, "q": "Was ist ein Stoff im chemischen Sinn?", "a": "Das, woraus ein Gegenstand besteht – erkennbar an seinen Eigenschaften", "t": "Stoffbegriff"}, {"id": 1, "q": "Welche drei Aggregatzustände gibt es?", "a": "Fest, flüssig und gasförmig", "t": "Aggregatzustand"}, {"id": 2, "q": "Wie nennt man den direkten Übergang fest → gasförmig (z. B. bei CO₂)?", "a": "Sublimieren", "t": "Aggregatzustand"}, {"id": 3, "q": "Welche Eigenschaft haben Gase bezüglich Form und Volumen?", "a": "Keine feste Form und kein festes Volumen, komprimierbar", "t": "Aggregatzustand"}, {"id": 4, "q": "Lassen sich Flüssigkeiten zusammendrücken (komprimieren)?", "a": "Nein, sie sind praktisch nicht komprimierbar", "t": "Aggregatzustand"}, {"id": 5, "q": "Worin unterscheiden sich Dampf und Gas?", "a": "Dampf: Stoff ist bei Umgebungstemperatur flüssig; Gas: schon gasförmig", "t": "Aggregatzustand"}, {"id": 6, "q": "Wie nehmen Risiken bei festen, flüssigen und gasförmigen Stoffen zu?", "a": "fest < flüssig < gasförmig", "t": "Bedeutung für die Feuerwehr"}, {"id": 7, "q": "Was versteht man unter Diffusion?", "a": "Eindringen von Stoffteilchen in einen anderen Stoff durch Wärmebewegung", "t": "Aggregatzustand"}, {"id": 8, "q": "Wodurch unterscheiden sich homogene und heterogene Systeme?", "a": "Homogen = eine Phase, heterogen = mehrere Phasen", "t": "Stoffgemische"}, {"id": 9, "q": "Was ist ein Element?", "a": "Ein Reinstoff, der chemisch nicht weiter zerlegbar ist (eine Atomart)", "t": "Stoffgemische"}, {"id": 10, "q": "Was ist eine Verbindung?", "a": "Ein Reinstoff aus mehreren Elementen", "t": "Stoffgemische"}, {"id": 11, "q": "Was ist ein Atom?", "a": "Das kleinste chemisch nicht weiter zerlegbare Teilchen", "t": "Stoffgemische"}, {"id": 12, "q": "Was ist ein Molekül?", "a": "Die Verbindung von mindestens zwei Atomen", "t": "Stoffgemische"}, {"id": 13, "q": "Was beschreibt der Schmelzpunkt?", "a": "Temperatur, bei der ein Stoff von fest nach flüssig übergeht", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 14, "q": "Auf welchen Bezugsstoff bezieht sich die Verdunstungszahl?", "a": "Diethylether (= 1)", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 15, "q": "Was bedeutet eine große Verdunstungszahl?", "a": "Der Stoff verdunstet langsam", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 16, "q": "Worauf bezieht sich das Dampfdichteverhältnis?", "a": "Auf die Dichte von Luft (= 1)", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 17, "q": "Welche Gefahr birgt ein hohes Dampfdichteverhältnis (> 1)?", "a": "Die Gasphase reichert sich in unteren Zonen an", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 18, "q": "Sind Dämpfe brennbarer Flüssigkeiten meist schwerer oder leichter als Luft?", "a": "Meist schwerer als Luft", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 19, "q": "Wovon hängt der Dampfdruck ab?", "a": "Allein von der Temperatur – er steigt mit ihr", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 20, "q": "Was ist der Siedepunkt?", "a": "Temperatur, bei der der Dampfdruck 1013 mbar erreicht", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 21, "q": "Wie verändert sich der Siedepunkt bei fallendem Luftdruck?", "a": "Er sinkt", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 22, "q": "Ab welchem Siedepunkt gilt ein Stoff als flüchtig?", "a": "Siedepunkt unter ca. 130–150 °C", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 23, "q": "Wie löst warmes Wasser Feststoffe im Vergleich zu kaltem (Regel)?", "a": "Warmes Wasser löst Feststoffe in der Regel besser", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 24, "q": "Welcher Feststoff löst sich in kaltem Wasser besser als in heißem?", "a": "Calciumsulfat (Gips)", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 25, "q": "Wie ist die Wasserlöslichkeit von Gasen temperaturabhängig?", "a": "Kaltes Wasser löst mehr Gas als warmes", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 26, "q": "Welche zwei Gase lassen sich mit Wasser nennenswert „auswaschen“?", "a": "Chlorwasserstoff und Ammoniak", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 27, "q": "Was bedeutet eine relative Dichte > 1 bei einem unpolaren Stoff?", "a": "Schwerer als Wasser – sinkt nach unten", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 28, "q": "Was gilt oberhalb der kritischen Temperatur?", "a": "Ein Gas lässt sich durch Druck nicht mehr verflüssigen", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 29, "q": "Wann tritt Vermischung vor allem durch Diffusion (statt Strömung) ein?", "a": "Wenn keine Strömung herrscht, z. B. in Gruben, Schächten, Tanks", "t": "Sicherheitstechnische Kennzahlen"}, {"id": 30, "q": "Wie bewegen sich Elektronen im Bohr'schen Atommodell?", "a": "Auf bestimmten Kreisbahnen (Schalen) um den Kern", "t": "Aufbau der Materie"}, {"id": 31, "q": "Welche Ladung trägt das Elektron?", "a": "Negativ", "t": "Aufbau der Materie"}, {"id": 32, "q": "Welche Ladung trägt das Proton und wo sitzt es?", "a": "Positiv, im Atomkern", "t": "Aufbau der Materie"}, {"id": 33, "q": "Welche Ladung trägt das Neutron?", "a": "Keine – es ist ungeladen", "t": "Aufbau der Materie"}, {"id": 34, "q": "Wie viele Elektronen passen maximal auf eine Schale?", "a": "2 · n² (n = Schalennummer)", "t": "Aufbau der Materie"}, {"id": 35, "q": "Wie viele Elektronen fasst die äußerste Schale maximal (Oktettregel)?", "a": "8", "t": "Aufbau der Materie"}, {"id": 36, "q": "Was gibt die Ordnungszahl Z an?", "a": "Die Anzahl der Protonen im Kern", "t": "Aufbau der Materie"}, {"id": 37, "q": "Was ist die Massenzahl A?", "a": "Die Summe aus Protonen und Neutronen", "t": "Aufbau der Materie"}, {"id": 38, "q": "Was kennzeichnet Isotope eines Elements?", "a": "Gleiche Protonenzahl, aber unterschiedliche Neutronenzahl", "t": "Aufbau der Materie"}, {"id": 39, "q": "Was versteht man unter Ionisierungsenergie?", "a": "Energie, um ein Elektron aus dem Atom abzutrennen", "t": "Aufbau der Materie"}, {"id": 40, "q": "Wie heißen die waagerechten Reihen im Periodensystem?", "a": "Perioden", "t": "Periodensystem"}, {"id": 41, "q": "Was gibt die Hauptgruppennummer an?", "a": "Die Anzahl der Außenelektronen (Valenzelektronen)", "t": "Periodensystem"}, {"id": 42, "q": "Welches Prinzip ordnet das Periodensystem?", "a": "Die Ordnungszahl (Kernladungszahl Z)", "t": "Periodensystem"}, {"id": 43, "q": "Wie heißt die 1. Hauptgruppe?", "a": "Alkalimetalle", "t": "Periodensystem"}, {"id": 44, "q": "Wie heißt die 7. Hauptgruppe?", "a": "Halogene (Salzbildner)", "t": "Periodensystem"}, {"id": 45, "q": "Wie heißt die 8. Hauptgruppe?", "a": "Edelgase", "t": "Periodensystem"}, {"id": 46, "q": "Welche Eigenschaft ist typisch für Edelgase?", "a": "Sehr reaktionsträge", "t": "Periodensystem"}, {"id": 47, "q": "Welches ist das reaktivste aller Elemente?", "a": "Fluor", "t": "Periodensystem"}, {"id": 48, "q": "Wie werden Alkalimetalle aufbewahrt?", "a": "Unter Petroleum", "t": "Periodensystem"}, {"id": 49, "q": "Was geschieht bei einer chemischen Reaktion?", "a": "Aus Ausgangsstoffen entstehen neue Stoffe mit neuen Eigenschaften", "t": "Chemische Reaktion"}, {"id": 50, "q": "Was sind Edukte und Produkte?", "a": "Edukte = Ausgangsstoffe, Produkte = entstandene Stoffe", "t": "Chemische Reaktion"}, {"id": 51, "q": "Was ist eine Synthese?", "a": "Aus mehreren Stoffen entsteht ein zusammengesetzter Stoff", "t": "Chemische Reaktion"}, {"id": 52, "q": "Was ist eine Analyse (chemisch)?", "a": "Ein Stoff wird in mehrere zerlegt", "t": "Chemische Reaktion"}, {"id": 53, "q": "Was besagt das Gesetz von der Erhaltung der Masse (Lavoisier)?", "a": "Die Gesamtmasse bleibt bei chemischen Vorgängen unverändert", "t": "Chemische Grundgesetze"}, {"id": 54, "q": "Was bedeutet der Reaktionspfeil in einer Gleichung?", "a": "„reagiert zu“", "t": "Chemische Reaktion"}, {"id": 55, "q": "Welche sieben Nichtmetalle treten als zweiatomige Moleküle auf?", "a": "H₂, N₂, O₂, F₂, Cl₂, Br₂, I₂", "t": "Chemische Reaktion"}, {"id": 56, "q": "Was ist die Aktivierungsenergie?", "a": "Energie, die zugeführt werden muss, damit die Reaktion einsetzt", "t": "Chemische Reaktion"}, {"id": 57, "q": "Was kennzeichnet eine exotherme Reaktion?", "a": "Sie gibt Wärme an die Umgebung ab (ΔH negativ)", "t": "Chemische Reaktion"}, {"id": 58, "q": "Was kennzeichnet eine endotherme Reaktion?", "a": "Sie nimmt Wärme aus der Umgebung auf (ΔH positiv)", "t": "Chemische Reaktion"}, {"id": 59, "q": "Was besagt die RGT-Regel?", "a": "Pro 10 °C Temperaturerhöhung verdoppelt sich die Reaktionsgeschwindigkeit", "t": "Chemische Reaktion"}, {"id": 60, "q": "Was bewirkt ein Katalysator?", "a": "Er setzt die Aktivierungsenergie herab und bleibt selbst unverändert", "t": "Chemische Reaktion"}, {"id": 61, "q": "Welcher Faktor beeinflusst die Reaktionsgeschwindigkeit?", "a": "Konzentration, Temperatur, Druck, Zerteilungsgrad, Katalysator", "t": "Chemische Reaktion"}, {"id": 62, "q": "Wie viele Teilchen sind 1 Mol (Avogadro-Zahl)?", "a": "6,022 · 10²³", "t": "Stöchiometrie"}, {"id": 63, "q": "Wie groß ist das molare Volumen eines idealen Gases (0 °C, 1013 mbar)?", "a": "22,4 l/mol", "t": "Stöchiometrie"}, {"id": 64, "q": "Auf welches Element ist die atomare Masseneinheit u bezogen (seit 1961)?", "a": "Kohlenstoff (C-12)", "t": "Stöchiometrie"}, {"id": 65, "q": "Was besagt der Satz von Avogadro?", "a": "Gleiche Gasvolumina enthalten bei gleichem Druck/Temperatur gleich viele Teilchen", "t": "Stöchiometrie"}, {"id": 66, "q": "Was ist eine Oxidation (moderne Definition)?", "a": "Abgabe von Elektronen", "t": "Oxidation und Reduktion"}, {"id": 67, "q": "Was ist eine Reduktion (moderne Definition)?", "a": "Aufnahme von Elektronen", "t": "Oxidation und Reduktion"}, {"id": 68, "q": "Was ist ein Oxidationsmittel?", "a": "Es nimmt Elektronen auf und wird selbst reduziert", "t": "Oxidation und Reduktion"}, {"id": 69, "q": "Was ist ein Reduktionsmittel?", "a": "Es gibt Elektronen ab und wird selbst oxidiert", "t": "Oxidation und Reduktion"}, {"id": 70, "q": "In welcher Beziehung stehen Oxidation und Reduktion?", "a": "Sie sind stets miteinander gekoppelt (Redoxreaktion)", "t": "Oxidation und Reduktion"}, {"id": 71, "q": "Welches ist das stärkste Oxidationsmittel?", "a": "Fluor", "t": "Oxidation und Reduktion"}, {"id": 72, "q": "Was beschreibt die Bindungswertigkeit (Wertigkeit)?", "a": "Anzahl an H-Atomen, die ein Atom binden oder ersetzen kann", "t": "Oxidation und Reduktion"}, {"id": 73, "q": "Was ist eine Säure nach Brönsted?", "a": "Ein Protonenspender (gibt H⁺ ab)", "t": "Säuren und Laugen"}, {"id": 74, "q": "Was ist eine Base nach Brönsted?", "a": "Ein Protonenakzeptor (nimmt H⁺ auf)", "t": "Säuren und Laugen"}, {"id": 75, "q": "Was ist eine Protolyse?", "a": "Eine Reaktion mit Übertragung von Protonen (H⁺)", "t": "Säuren und Laugen"}, {"id": 76, "q": "Welche Formel hat das Hydroniumion?", "a": "H₃O⁺", "t": "Säuren und Laugen"}, {"id": 77, "q": "Welche Ionen entstehen beim Lösen von HCl in Wasser?", "a": "H₃O⁺ und Cl⁻", "t": "Säuren und Laugen"}, {"id": 78, "q": "Was ist ein Ampholyt?", "a": "Ein Stoff, der als Säure und als Base wirken kann (z. B. Wasser)", "t": "Säuren und Laugen"}, {"id": 79, "q": "Was kennzeichnet eine starke Säure?", "a": "Sie protolysiert (fast) vollständig", "t": "Säuren und Laugen"}, {"id": 80, "q": "Wie ist der pH-Wert definiert?", "a": "Negativer Zehnerlogarithmus der H₃O⁺-Konzentration", "t": "pH-Wert"}, {"id": 81, "q": "Was bedeutet ein pH-Wert von 7?", "a": "Neutral", "t": "pH-Wert"}, {"id": 82, "q": "Welchen pH-Bereich haben saure Lösungen?", "a": "0 bis unter 7", "t": "pH-Wert"}, {"id": 83, "q": "Welchen pH-Bereich haben Laugen?", "a": "Über 7 bis 14", "t": "pH-Wert"}, {"id": 84, "q": "Welche Reaktion läuft bei der Neutralisation ab?", "a": "H⁺ + OH⁻ → H₂O (stark exotherm)", "t": "Säuren und Laugen"}, {"id": 85, "q": "Wie weist man den bei Säure + Metall entstehenden Wasserstoff nach?", "a": "Mit der Knallgasprobe", "t": "Säuren und Laugen"}, {"id": 86, "q": "Wann wirken Säuren ätzend?", "a": "Vor allem in wässriger Lösung", "t": "Säuren und Laugen"}], "topics": [{"name": "Sicherheitstechnische Kennzahlen", "color": "#D9A521", "fg": "#ffffff", "count": 17}, {"name": "Chemische Reaktion", "color": "#E05A4E", "fg": "#ffffff", "count": 12}, {"name": "Aufbau der Materie", "color": "#5B6CE0", "fg": "#ffffff", "count": 10}, {"name": "Säuren und Laugen", "color": "#7A5AD6", "fg": "#ffffff", "count": 10}, {"name": "Periodensystem", "color": "#4FA85A", "fg": "#ffffff", "count": 9}, {"name": "Oxidation und Reduktion", "color": "#D6539B", "fg": "#ffffff", "count": 7}, {"name": "Aggregatzustand", "color": "#2FA4A6", "fg": "#ffffff", "count": 6}, {"name": "Stoffgemische", "color": "#8A6FB0", "fg": "#ffffff", "count": 5}, {"name": "Stöchiometrie", "color": "#3E9BD6", "fg": "#ffffff", "count": 4}, {"name": "pH-Wert", "color": "#8FB52A", "fg": "#ffffff", "count": 4}, {"name": "Bedeutung für die Feuerwehr", "color": "#C8442E", "fg": "#ffffff", "count": 1}, {"name": "Chemische Grundgesetze", "color": "#B07D4A", "fg": "#ffffff", "count": 1}, {"name": "Stoffbegriff", "color": "#6C7A9C", "fg": "#ffffff", "count": 1}], "total": 87};</script>
+<script>
+(function(){
+  const D = window.DATA;
+  const ALL = D.cards;
+  const TOPICS = D.topics;
+
+  const state = {
+    topic: null,        // null = all
+    shuffle: false,
+    onlynew: false,
+    deck: [],           // array of card objects in current order
+    i: 0,
+    flipped: false,
+    known: new Set(),   // card ids
+  };
+
+  // ---- build chips ----
+  const chipsEl = document.getElementById('chips');
+  function makeChip(label, count, color, value){
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.setAttribute('aria-pressed', String(state.topic === value));
+    b.dataset.value = value === null ? '' : value;
+    if(value !== null){
+      const dot = document.createElement('span'); dot.className='dot'; dot.style.background=color; b.appendChild(dot);
+    }
+    const t = document.createElement('span'); t.textContent = label; b.appendChild(t);
+    const n = document.createElement('span'); n.className='n'; n.textContent = count; b.appendChild(n);
+    if(state.topic === value){
+      if(value === null){ b.style.background='#ea7a3c'; b.style.color='#1a120b'; }
+      else { b.style.background=color; b.style.color = topicFg(value); }
+    }
+    b.addEventListener('click', ()=>{ state.topic = value; state.onlynew=false; syncToggles(); buildDeck(true); renderChips(); });
+    return b;
+  }
+  function topicColor(name){ const t = TOPICS.find(x=>x.name===name); return t?t.color:'#888'; }
+  function topicFg(name){ const t = TOPICS.find(x=>x.name===name); return t?t.fg:'#fff'; }
+  function renderChips(){
+    chipsEl.innerHTML='';
+    chipsEl.appendChild(makeChip('Alle Themen', D.total, null, null));
+    TOPICS.forEach(t=> chipsEl.appendChild(makeChip(t.name, t.count, t.color, t.name)));
+  }
+
+  // ---- deck ----
+  function baseList(){
+    let list = state.topic ? ALL.filter(c=>c.t===state.topic) : ALL.slice();
+    if(state.onlynew) list = list.filter(c=>!state.known.has(c.id));
+    return list;
+  }
+  function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  function buildDeck(resetIndex){
+    let list = baseList();
+    if(state.shuffle) list = shuffleArr(list.slice());
+    state.deck = list;
+    if(resetIndex || state.i >= state.deck.length) state.i = 0;
+    state.flipped = false;
+    render();
+  }
+
+  // ---- render ----
+  const stage = document.getElementById('stage');
+  const controls = document.getElementById('controls');
+  function render(){
+    const total = state.deck.length;
+    document.getElementById('sub').textContent =
+      (state.topic ? state.topic : 'Alle Themen') + ' · ' + total + ' Karten';
+    updateMeter();
+
+    if(total === 0){ renderEmpty(); controls.style.opacity='.45'; controls.style.pointerEvents='none'; return; }
+    controls.style.opacity='1'; controls.style.pointerEvents='auto';
+
+    const c = state.deck[state.i];
+    const col = topicColor(c.t);
+    stage.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'card' + (state.flipped ? ' flipped' : '');
+    card.setAttribute('role','button');
+    card.setAttribute('tabindex','0');
+    card.setAttribute('aria-label','Karte umdrehen');
+    card.innerHTML =
+      faceHTML('front', c, col) + faceHTML('back', c, col);
+    card.addEventListener('click', flip);
+    card.addEventListener('keydown', e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); flip(); }});
+    stage.appendChild(card);
+
+    document.getElementById('prev').disabled = state.i===0;
+    document.getElementById('next').disabled = state.i>=total-1;
+    document.getElementById('flip').textContent = state.flipped ? 'Frage zeigen' : 'Umdrehen';
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function faceHTML(side, c, col){
+    const isFront = side==='front';
+    const known = state.known.has(c.id);
+    const tab = '<span class="tab" style="background:'+col+'"></span><span class="spine" style="background:'+col+'"></span>';
+    const label = '<div class="label"><span class="topic">'+esc(c.t)+'</span><span class="kind">'+(isFront?'Frage':'Antwort')+(known?' · ✓':'')+'</span></div>';
+    const text = '<div class="qa">'+esc(isFront?c.q:c.a)+'</div>';
+    let bottom;
+    if(isFront){
+      bottom = '<div class="hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 7v5l3 2"/></svg>Tippen zum Umdrehen<span class="idx">'+(state.i+1)+' / '+state.deck.length+'</span></div>';
+    } else {
+      bottom = '<div class="hint">Antwort<span class="idx">'+(state.i+1)+' / '+state.deck.length+'</span></div>';
+    }
+    return '<div class="face '+side+'">'+tab+label+text+bottom+'</div>';
+  }
+  function renderEmpty(){
+    stage.innerHTML =
+      '<div class="empty"><div class="big">✓</div><h2>Alles durchgearbeitet</h2>'+
+      '<p>In diesem Filter sind keine offenen Karten mehr. Setze den Fortschritt zurück oder wähle ein anderes Thema.</p>'+
+      '<button id="emptyreset">Fortschritt zurücksetzen</button></div>';
+    document.getElementById('emptyreset').addEventListener('click', resetProgress);
+  }
+  function updateMeter(){
+    const total = state.topic ? ALL.filter(c=>c.t===state.topic).length : D.total;
+    const knownHere = (state.topic ? ALL.filter(c=>c.t===state.topic) : ALL).filter(c=>state.known.has(c.id)).length;
+    document.getElementById('pos').textContent = total ? (Math.min(state.i+1, state.deck.length||1)) + ' / ' + (state.deck.length||total) : '0 / 0';
+    document.getElementById('known').textContent = '✓ ' + knownHere;
+    document.getElementById('barfill').style.width = total ? (knownHere/total*100)+'%' : '0%';
+  }
+
+  // ---- actions ----
+  function flip(){ state.flipped=!state.flipped; const card=stage.querySelector('.card'); if(card){ card.classList.toggle('flipped',state.flipped); document.getElementById('flip').textContent = state.flipped?'Frage zeigen':'Umdrehen'; } }
+  function go(d){ const n=state.i+d; if(n<0||n>=state.deck.length) return; state.i=n; state.flipped=false; render(); }
+  function advance(){ if(state.i < state.deck.length-1){ state.i++; state.flipped=false; render(); } else { state.flipped=false; render(); } }
+  function mark(known){
+    const c = state.deck[state.i]; if(!c) return;
+    if(known) state.known.add(c.id); else state.known.delete(c.id);
+    if(state.onlynew && known){
+      // remove from deck on the fly
+      state.deck = state.deck.filter(x=>x.id!==c.id);
+      if(state.i>=state.deck.length) state.i=Math.max(0,state.deck.length-1);
+      state.flipped=false; render();
+    } else {
+      advance();
+    }
+  }
+  function resetProgress(){ state.known.clear(); buildDeck(false); }
+
+  // ---- toggles ----
+  const shuffleBtn = document.getElementById('shuffle');
+  const onlynewBtn = document.getElementById('onlynew');
+  function syncToggles(){ shuffleBtn.setAttribute('aria-pressed',String(state.shuffle)); onlynewBtn.setAttribute('aria-pressed',String(state.onlynew)); }
+  shuffleBtn.addEventListener('click', ()=>{ state.shuffle=!state.shuffle; syncToggles(); buildDeck(true); });
+  onlynewBtn.addEventListener('click', ()=>{ state.onlynew=!state.onlynew; syncToggles(); buildDeck(true); });
+  document.getElementById('reset').addEventListener('click', resetProgress);
+
+  document.getElementById('prev').addEventListener('click', ()=>go(-1));
+  document.getElementById('next').addEventListener('click', ()=>go(1));
+  document.getElementById('flip').addEventListener('click', flip);
+  document.getElementById('again').addEventListener('click', ()=>mark(false));
+  document.getElementById('know').addEventListener('click', ()=>mark(true));
+
+  document.addEventListener('keydown', e=>{
+    if(e.target.tagName==='BUTTON' && (e.key===' '||e.key==='Enter')) return;
+    if(e.key==='ArrowLeft') go(-1);
+    else if(e.key==='ArrowRight') go(1);
+    else if(e.key===' '){ e.preventDefault(); flip(); }
+    else if(e.key==='j'||e.key==='J') mark(true);
+    else if(e.key==='n'||e.key==='N') mark(false);
+  });
+
+  document.getElementById('foot').innerHTML =
+    '<span class="kbd">←</span> <span class="kbd">→</span> blättern · <span class="kbd">Leer</span> umdrehen · <span class="kbd">J</span> gewusst · <span class="kbd">N</span> nochmal<br>Fortschritt wird nur in dieser Sitzung gehalten.';
+
+  renderChips();
+  buildDeck(true);
+})();
+</script>
+</body>
+</html>
